@@ -18,7 +18,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: jenkins-leader
-          image: zzussong.sytes.net:32407/harbor/jenkins/jenkins@sha256:ac0a1f32abc4fac73d18fdf04316055709358ec93761e690eebdfed357273489
+          image: "zzussong.sytes.net:32407/harbor/jenkins\/jenkins@sha256:ac0a1f32abc4fac73d18fdf04316055709358ec93761e690eebdfed357273489"
           volumeMounts:
           - name: jenkins-home
             mountPath: /var/jenkins_home
