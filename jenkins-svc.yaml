@@ -40,8 +40,7 @@ spec:
           #persistentVolumeClaim:
             #claimName: jenkins-leader-pvc
           hostPath:
-            path: /var/run/docker.sock
-            type: File            
+            path: /var/run/docker.sock         
       nodeSelector:
         kubernetes.io/hostname: ui
 ---
