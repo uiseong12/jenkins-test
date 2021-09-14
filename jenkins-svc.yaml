@@ -41,7 +41,7 @@ spec:
             #claimName: jenkins-leader-pvc
           hostPath:
             path: /var/run/docker.sock
-            type: Directory            
+            type: File            
       nodeSelector:
         kubernetes.io/hostname: ui
 ---
