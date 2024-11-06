@@ -1,112 +1,68 @@
-
-
-
-
-package com.example.service;     
+package com.example.order;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.logging.Logger;
 
-767
-import java.util.stream.Collectors;
+public class OrderService {
+    private static final Logger logger = Logger.getLogger(OrderService.class.getName());
+    private final List<Order> orderList = new ArrayList<>();
 
-public class UserService {
-    private static final Logger logger = Logger.getLogger(UserService.class.getName());
-    private final Map<Integer, User> userDatabase = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-
-    public UserService() {
-        scheduler.scheduleAtFixedRate(this::removeInactiveUsers, 1, 1, TimeUnit.HOURS);
-    }
-
-    public User createUser(String name, int age) {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
+    public void addOrder(int orderId, String productName, int quantity) {
+        if (productName == null || productName.isEmpty()) {
+            throw new IllegalArgumentException("Product name cannot be null or empty");
         }
-        if (age < 0 || age > 150) {
-            throw new IllegalArgumentException("Age must be a realistic number");
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
         }
-        int userId = generateUserId();
-        User user = new User(userId, name, age, System.currentTimeMillis());
-        userDatabase.put(userId, user);
-        logger.info("User created: " + user);
-        return user;
+        
+        Order order = new Order(orderId, productName, quantity);
+        orderList.add(order);
+        logger.info("Order added: " + order);
     }
 
-    public Optional<User> findUserById(int userId) {
-        return Optional.ofNullable(userDatabase.get(userId));
+    public Optional<Order> findOrderById(int orderId) {
+        return orderList.stream()
+                .filter(order -> order.getOrderId() == orderId)
+                .findFirst();
     }
 
-    public List<User> getAllUsers() {
-        return new ArrayList<>(userDatabase.values());
-    }
-
-    public List<User> getActiveUsers() {
-        long now = System.currentTimeMillis();
-        return userDatabase.values().stream()
-                .filter(user -> now - user.getLastActive() < TimeUnit.HOURS.toMillis(1))
-                .collect(Collectors.toList());
-    }
-
-    public void updateUserActivity(int userId) {
-        User user = userDatabase.get(userId);
-        if (user != null) {
-            user.setLastActive(System.currentTimeMillis());
-            logger.info("Updated last active for user: " + userId);
+    public void cancelOrder(int orderId) {
+        Optional<Order> order = findOrderById(orderId);
+        if (order.isPresent()) {
+            orderList.remove(order.get());
+            logger.info("Order cancelled: " + orderId);
+        } else {
+            logger.warning("Order not found: " + orderId);
         }
     }
 
-    private void removeInactiveUsers() {
-        long now = System.currentTimeMillis();
-        userDatabase.values().removeIf(user -> now - user.getLastActive() > TimeUnit.DAYS.toMillis(30));
-        logger.info("Inactive users removed");
-    }
-
-    private int generateUserId() {
-        Random random = new Random();
-        int id;
-        do {
-            id = random.nextInt(10000);
-        } while (userDatabase.containsKey(id));
-        return id;
-    }
-
-    public void shutdownService() {
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
+    public void listAllOrders() {
+        if (orderList.isEmpty()) {
+            logger.info("No orders to display.");
+        } else {
+            orderList.forEach(order -> logger.info(order.toString()));
         }
-        logger.info("User service shutdown complete");
     }
 
-    // Inner User class
-    private static class User {
-        private final int id;
-        private final String name;
-        private final int age;
-        private long lastActive;
+    // Inner Order class
+    private static class Order {
+        private final int orderId;
+        private final String productName;
+        private final int quantity;
 
-        public User(int id, String name, int age, long lastActive) {
-            this.id = id;
-            this.name = name;
-            this.age = age;
-            this.lastActive = lastActive;
+        public Order(int orderId, String productName, int quantity) {
+            this.orderId = orderId;
+            this.productName = productName;
+            this.quantity = quantity;
         }
 
-        public int getId() { return id; }
-        public String getName() { return name; }
-        public int getAge() { return age; }
-        public long getLastActive() { return lastActive; }
-        public void setLastActive(long lastActive) { this.lastActive = lastActive; }
+        public int getOrderId() { return orderId; }
+        public String getProductName() { return productName; }
+        public int getQuantity() { return quantity; }
 
         @Override
         public String toString() {
-            return "User{id=" + id + ", name='" + name + "', age=" + age + ", lastActive=" + lastActive + '}';
+            return "Order{id=" + orderId + ", product='" + productName + "', quantity=" + quantity + '}';
         }
     }
 }
