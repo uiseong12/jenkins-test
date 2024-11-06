@@ -24,35 +24,6 @@ public class InventoryService {
         return Optional.ofNullable(inventory.get(itemId));
     }
 
-    public void updateQuantity(String itemId, int quantity) {
-        Item item = inventory.get(itemId);
-        if (item != null) {
-            item.setQuantity(quantity);
-            logger.info("Quantity updated for item: " + itemId + " to " + quantity);
-        } else {
-            logger.warning("Item not found: " + itemId);
-        }
-    }
-
-    public void removeItem(String itemId) {
-        Item removed = inventory.remove(itemId);
-        if (removed != null) {
-            logger.info("Item removed: " + itemId);
-        } else {
-            logger.warning("Item not found: " + itemId);
-        }
-    }
-
-    public double calculateTotalInventoryValue() {
-        return inventory.values().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
-    }
-
-    public void listAllItems() {
-        if (inventory.isEmpty()) {
-            logger.info("No items in inventory.");
-        } else {
             inventory.values().forEach(item -> logger.info(item.toString()));
         }
     }
