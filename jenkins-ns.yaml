@@ -1,7 +1,88 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ns-jenkins
-  labels:
-    name: jenkins
+import java.util.ArrayList;
+import java.util.List;
 
+class Book {
+    private String title;
+    private String author;
+    private String isbn;
+
+    public Book(String title, String author, String isbn) {
+        this.title = title;
+        this.author = author;
+        this.isbn = isbn;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{title='" + title + "', author='" + author + "', isbn='" + isbn + "'}";
+    }
+}
+
+class Library {
+    private List<Book> books;
+
+    public Library() {
+        this.books = new ArrayList<>();
+    }
+
+    public void addBook(Book book) {
+        books.add(book);
+        System.out.println(book.getTitle() + " added to the library.");
+    }
+
+    public void removeBook(String isbn) {
+        books.removeIf(book -> book.getIsbn().equals(isbn));
+        System.out.println("Book with ISBN " + isbn + " removed from the library.");
+    }
+
+    public Book findBookByTitle(String title) {
+        for (Book book : books) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                return book;
+            }
+        }
+        System.out.println("Book with title '" + title + "' not found.");
+        return null;
+    }
+
+    public void listBooks() {
+        if (books.isEmpty()) {
+            System.out.println("The library has no books.");
+        } else {
+            for (Book book : books) {
+                System.out.println(book);
+            }
+        }
+    }
+}
+
+public class LibrarySystem {
+    public static void main(String[] args) {
+        Library library = new Library();
+        
+        Book book1 = new Book("The Great Gatsby", "F. Scott Fitzgerald", "1234567890");
+        Book book2 = new Book("1984", "George Orwell", "2345678901");
+
+        library.addBook(book1);
+        library.addBook(book2);
+
+        library.listBooks();
+        
+        library.findBookByTitle("1984");
+        library.removeBook("1234567890");
+
+        library.listBooks();
+    }
+}
