@@ -1,5 +1,106 @@
-public class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
+package com.example.service;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+public class UserService {
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
+    private final Map<Integer, User> userDatabase = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+
+    public UserService() {
+        scheduler.scheduleAtFixedRate(this::removeInactiveUsers, 1, 1, TimeUnit.HOURS);
+    }
+
+    public User createUser(String name, int age) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null or empty");
+        }
+        if (age < 0 || age > 150) {
+            throw new IllegalArgumentException("Age must be a realistic number");
+        }
+        int userId = generateUserId();
+        User user = new User(userId, name, age, System.currentTimeMillis());
+        userDatabase.put(userId, user);
+        logger.info("User created: " + user);
+        return user;
+    }
+
+    public Optional<User> findUserById(int userId) {
+        return Optional.ofNullable(userDatabase.get(userId));
+    }
+
+    public List<User> getAllUsers() {
+        return new ArrayList<>(userDatabase.values());
+    }
+
+    public List<User> getActiveUsers() {
+        long now = System.currentTimeMillis();
+        return userDatabase.values().stream()
+                .filter(user -> now - user.getLastActive() < TimeUnit.HOURS.toMillis(1))
+                .collect(Collectors.toList());
+    }
+
+    public void updateUserActivity(int userId) {
+        User user = userDatabase.get(userId);
+        if (user != null) {
+            user.setLastActive(System.currentTimeMillis());
+            logger.info("Updated last active for user: " + userId);
+        }
+    }
+
+    private void removeInactiveUsers() {
+        long now = System.currentTimeMillis();
+        userDatabase.values().removeIf(user -> now - user.getLastActive() > TimeUnit.DAYS.toMillis(30));
+        logger.info("Inactive users removed");
+    }
+
+    private int generateUserId() {
+        Random random = new Random();
+        int id;
+        do {
+            id = random.nextInt(10000);
+        } while (userDatabase.containsKey(id));
+        return id;
+    }
+
+    public void shutdownService() {
+        scheduler.shutdown();
+        try {
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            scheduler.shutdownNow();
+        }
+        logger.info("User service shutdown complete");
+    }
+
+    // Inner User class
+    private static class User {
+        private final int id;
+        private final String name;
+        private final int age;
+        private long lastActive;
+
+        public User(int id, String name, int age, long lastActive) {
+            this.id = id;
+            this.name = name;
+            this.age = age;
+            this.lastActive = lastActive;
+        }
+
+        public int getId() { return id; }
+        public String getName() { return name; }
+        public int getAge() { return age; }
+        public long getLastActive() { return lastActive; }
+        public void setLastActive(long lastActive) { this.lastActive = lastActive; }
+
+        @Override
+        public String toString() {
+            return "User{id=" + id + ", name='" + name + "', age=" + age + ", lastActive=" + lastActive + '}';
+        }
     }
 }
