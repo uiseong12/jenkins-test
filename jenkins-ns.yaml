@@ -1,85 +1,68 @@
-package com.example.inventory;
+package com.example.order;
 
 import java.util.*;
 import java.util.logging.Logger;
 
-public class InventoryService {
-    private static final Logger logger = Logger.getLogger(InventoryService.class.getName());
-    private final Map<String, Item> inventory = new HashMap<>();
+public class OrderService {
+    private static final Logger logger = Logger.getLogger(OrderService.class.getName());
+    private final List<Order> orderList = new ArrayList<>();
 
-    public void addItem(String itemId, String name, int quantity, double price) {
-        if (itemId == null || itemId.isEmpty() || name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Item ID and name cannot be null or empty");
+    public void addOrder(int orderId, String productName, int quantity) {
+        if (productName == null || productName.isEmpty()) {
+            throw new IllegalArgumentException("Product name cannot be null or empty");
         }
-        if (quantity < 0 || price < 0) {
-            throw new IllegalArgumentException("Quantity and price must be non-negative");
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
         }
-
-        Item item = new Item(itemId, name, quantity, price);
-        inventory.put(itemId, item);
-        logger.info("Item added: " + item);
+        
+        Order order = new Order(orderId, productName, quantity);
+        orderList.add(order);
+        logger.info("Order added: " + order);
     }
 
-    public Optional<Item> findItemById(String itemId) {
-        return Optional.ofNullable(inventory.get(itemId));
+    public Optional<Order> findOrderById(int orderId) {
+        return orderList.stream()
+                .filter(order -> order.getOrderId() == orderId)
+                .findFirst();
     }
 
-    public void updateQuantity(String itemId, int quantity) {
-        Item item = inventory.get(itemId);
-        if (item != null) {
-            item.setQuantity(quantity);
-            logger.info("Quantity updated for item: " + itemId + " to " + quantity);
+    public void cancelOrder(int orderId) {
+        Optional<Order> order = findOrderById(orderId);
+        if (order.isPresent()) {
+            orderList.remove(order.get());
+            logger.info("Order cancelled: " + orderId);
         } else {
-            logger.warning("Item not found: " + itemId);
+            logger.warning("Order not found: " + orderId);
         }
     }
 
-    public void removeItem(String itemId) {
-        Item removed = inventory.remove(itemId);
-        if (removed != null) {
-            logger.info("Item removed: " + itemId);
+    public void listAllOrders() {
+        if (orderList.isEmpty()) {
+            logger.info("No orders to display.");
         } else {
-            logger.warning("Item not found: " + itemId);
+            orderList.forEach(order -> logger.info(order.toString()));
         }
     }
 
-    public double calculateTotalInventoryValue() {
-        return inventory.values().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
-    }
+    // Inner Order class
+    private static class Order {
+        private final int orderId;
+        private final String productName;
+        private final int quantity;
 
-    public void listAllItems() {
-        if (inventory.isEmpty()) {
-            logger.info("No items in inventory.");
-        } else {
-            inventory.values().forEach(item -> logger.info(item.toString()));
-        }
-    }
-
-    // Inner Item class
-    private static class Item {
-        private final String itemId;
-        private final String name;
-        private int quantity;
-        private final double price;
-
-        public Item(String itemId, String name, int quantity, double price) {
-            this.itemId = itemId;
-            this.name = name;
+        public Order(int orderId, String productName, int quantity) {
+            this.orderId = orderId;
+            this.productName = productName;
             this.quantity = quantity;
-            this.price = price;
         }
 
-        public String getItemId() { return itemId; }
-        public String getName() { return name; }
+        public int getOrderId() { return orderId; }
+        public String getProductName() { return productName; }
         public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
-        public double getPrice() { return price; }
 
         @Override
         public String toString() {
-            return "Item{id='" + itemId + "', name='" + name + "', quantity=" + quantity + ", price=" + price + '}';
+            return "Order{id=" + orderId + ", product='" + productName + "', quantity=" + quantity + '}';
         }
     }
 }
