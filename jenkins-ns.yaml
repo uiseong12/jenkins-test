@@ -1,56 +1,94 @@
-package com.example.inventory;
+public abstract class BankAccount {
+    protected String accountHolder;
+    protected double balance;
 
-import java.util.*;
-import java.util.logging.Logger;
-
-public class InventoryService {
-    private static final Logger logger = Logger.getLogger(InventoryService.class.getName());
-    private final Map<String, Item> inventory = new HashMap<>();
-
-    public void addItem(String itemId, String name, int quantity, double price) {
-        if (itemId == null || itemId.isEmpty() || name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Item ID and name cannot be null or empty");
-        }
-        if (quantity < 0 || price < 0) {
-            throw new IllegalArgumentException("Quantity and price must be non-negative");
-        }
-
-        Item item = new Item(itemId, name, quantity, price);
-        inventory.put(itemId, item);
-        logger.info("Item added: " + item);
+    public BankAccount(String accountHolder, double initialBalance) {
+        this.accountHolder = accountHolder;
+        this.balance = initialBalance;
     }
 
-    public Optional<Item> findItemById(String itemId) {
-        return Optional.ofNullable(inventory.get(itemId));
+    public String getAccountHolder() {
+        return accountHolder;
     }
 
-            inventory.values().forEach(item -> logger.info(item.toString()));
-        }
+    public double getBalance() {
+        return balance;
     }
 
-    // Inner Item class
-    private static class Item {
-        private final String itemId;
-        private final String name;
-        private int quantity;
-        private final double price;
+    public abstract void deposit(double amount);
+    public abstract void withdraw(double amount);
+}
 
-        public Item(String itemId, String name, int quantity, double price) {
-            this.itemId = itemId;
-            this.name = name;
-            this.quantity = quantity;
-            this.price = price;
+interface Transaction {
+    void execute();
+}
+
+class Deposit implements Transaction {
+    private BankAccount account;
+    private double amount;
+
+    public Deposit(BankAccount account, double amount) {
+        this.account = account;
+        this.amount = amount;
+    }
+
+    @Override
+    public void execute() {
+        account.deposit(amount);
+    }
+}
+
+class Withdrawal implements Transaction {
+    private BankAccount account;
+    private double amount;
+
+    public Withdrawal(BankAccount account, double amount) {
+        this.account = account;
+        this.amount = amount;
+    }
+
+    @Override
+    public void execute() {
+        account.withdraw(amount);
+    }
+}
+
+class CheckingAccount extends BankAccount {
+
+    public CheckingAccount(String accountHolder, double initialBalance) {
+        super(accountHolder, initialBalance);
+    }
+
+    @Override
+    public void deposit(double amount) {
+        if (amount <= 0) {
+            System.out.println("Deposit amount must be positive.");
+            return;
         }
+        balance += amount;
+        System.out.println(amount + " deposited. New balance: " + balance);
+    }
 
-        public String getItemId() { return itemId; }
-        public String getName() { return name; }
-        public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
-        public double getPrice() { return price; }
-
-        @Override
-        public String toString() {
-            return "Item{id='" + itemId + "', name='" + name + "', quantity=" + quantity + ", price=" + price + '}';
+    @Override
+    public void withdraw(double amount) {
+        if (amount > balance) {
+            System.out.println("Insufficient funds.");
+            return;
         }
+        balance -= amount;
+        System.out.println(amount + " withdrawn. New balance: " + balance);
+    }
+}
+
+public class BankSystem {
+    public static void main(String[] args) {
+        BankAccount account = new CheckingAccount("John Doe", 1000);
+        Transaction deposit = new Deposit(account, 200);
+        Transaction withdrawal = new Withdrawal(account, 500);
+
+        deposit.execute();
+        withdrawal.execute();
+
+        System.out.println("Final balance: " + account.getBalance());
     }
 }
